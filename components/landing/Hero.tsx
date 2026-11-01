@@ -1,9 +1,9 @@
 //Hero.tsx
 'use client'
 
-import { useCallback, useRef, useState, useSyncExternalStore } from 'react'
+import { useRef, useState, useSyncExternalStore } from 'react'
 import Image from 'next/image'
-import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap'
+import { gsap, Observer, useGSAP } from '@/lib/gsap'
 import { useLenisRef } from '@/components/landing/SmoothScroll'
 import { useCartStore } from '@/store/cartStore'
 
@@ -23,31 +23,31 @@ const SCREENS: Screen[] = [
   {
     id: 'new-collection',
     label: 'New Collection',
-    image: '/images/hero/new-collection.jpg',
+    image: '/images/hero/new-collection.png',
     alt: 'Model wearing pieces from the new Maili collection',
   },
   {
     id: 'earrings',
     label: 'Earrings',
-    image: '/images/hero/earrings.jpg',
+    image: '/images/hero/earrings.png',
     alt: 'Close-up of Maili earrings',
   },
   {
     id: 'necklaces',
     label: 'Necklaces',
-    image: '/images/hero/necklaces.jpg',
+    image: '/images/hero/necklaces.png',
     alt: 'Maili necklace resting on the neckline',
   },
   {
     id: 'rings',
     label: 'Rings',
-    image: '/images/hero/rings.jpg',
+    image: '/images/hero/rings.png',
     alt: 'Hand wearing Maili rings',
   },
   {
     id: 'bracelets',
     label: 'Bracelets',
-    image: '/images/hero/bracelets.jpg',
+    image: '/images/hero/bracelets.png',
     alt: 'Wrist wearing Maili bracelets',
   },
   { id: 'brand', label: 'Follow', light: true },
@@ -61,8 +61,10 @@ const SOCIALS = [
 ]
 
 const LAST = SCREENS.length - 1
-const SNAP_DELAY = 120 // ms sin scroll antes de acomodar la pantalla
-const SNAP_THRESHOLD = 0.15 // fracción del tramo que basta para avanzar a la vecina
+const TRANSITION = 1.1 // s que dura cada cambio de pantalla
+const GESTURE_GAP = 150 // ms de silencio que separan un gesto del siguiente; la cola de inercia no cuenta como gesto nuevo
+const GESTURE_MAX = 2500 // ms tras un cambio a partir de los cuales una entrada continua se acepta como gesto nuevo
+const NUDGE = 100 // px que avanza la página al salir de la hero, para no "gastar" el gesto de salida
 
 // El conteo del carrito vive en localStorage: el servidor siempre pinta 0 y el cliente corrige
 const subscribeCart = (onChange: () => void) => useCartStore.subscribe(onChange)
@@ -71,51 +73,20 @@ const getServerCartCount = () => 0
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
+interface HeroControls {
+  next: () => void
+  toCatalog: () => void
+}
+
 export default function Hero() {
   const sectionRef = useRef<HTMLElement>(null)
-  const triggerRef = useRef<ScrollTrigger | null>(null)
-  const stepsRef = useRef(LAST) // tramos en los que se divide el recorrido pinned
-  const currentRef = useRef(0)
+  const controlsRef = useRef<HeroControls | null>(null)
   const lenisRef = useLenisRef()
   const [current, setCurrent] = useState(0)
   const [failed, setFailed] = useState<ReadonlySet<string>>(new Set())
   const bagCount = useSyncExternalStore(subscribeCart, getCartCount, getServerCartCount)
 
   const light = !!SCREENS[current].light
-
-  const updateCurrent = useCallback((index: number) => {
-    if (index === currentRef.current) return
-    currentRef.current = index
-    setCurrent(index)
-  }, [])
-
-  const scrollToY = useCallback(
-    (y: number, duration: number) => {
-      const lenis = lenisRef.current
-      if (lenis) lenis.scrollTo(y, { duration })
-      else window.scrollTo({ top: y })
-    },
-    [lenisRef],
-  )
-
-  const goTo = useCallback(
-    (index: number) => {
-      const trigger = triggerRef.current
-      if (!trigger) return
-      scrollToY(trigger.start + (index / stepsRef.current) * (trigger.end - trigger.start), 1.2)
-    },
-    [scrollToY],
-  )
-
-  const goToCatalog = useCallback(() => {
-    const catalog = document.getElementById('catalog')
-    if (!catalog) return
-    const lenis = lenisRef.current
-    if (lenis) lenis.scrollTo(catalog, { duration: 1.4 })
-    else catalog.scrollIntoView()
-  }, [lenisRef])
-
-  const handleCounter = () => (current === LAST ? goToCatalog() : goTo(current + 1))
 
   useGSAP(
     () => {
@@ -124,26 +95,14 @@ export default function Hero() {
 
       const screens = gsap.utils.toArray<HTMLElement>('[data-screen]', section)
       const medias = gsap.utils.toArray<HTMLElement>('[data-media]', section)
+      const html = document.documentElement
       const mm = gsap.matchMedia()
 
-      mm.add('(prefers-reduced-motion: no-preference)', () => {
-        stepsRef.current = LAST
-
-        const timeline = gsap.timeline({
-          defaults: { ease: 'none' },
-          scrollTrigger: {
-            trigger: section,
-            start: 'top top',
-            end: `+=${LAST * 100}%`,
-            pin: true,
-            scrub: true,
-            anticipatePin: 1,
-            invalidateOnRefresh: true,
-            onUpdate: (self) => updateCurrent(Math.round(self.progress * LAST)),
-          },
-        })
-        triggerRef.current = timeline.scrollTrigger ?? null
-
+      // `instant`: reduced-motion, mismos gestos pero el cambio de pantalla es directo
+      const setup = (instant: boolean) => {
+        // Timeline pausada: un label por pantalla; cada gesto la lleva de un label al siguiente por tiempo
+        const timeline = gsap.timeline({ paused: true, defaults: { ease: 'none' } })
+        timeline.addLabel('s0', 0)
         screens.forEach((screen, i) => {
           if (i === 0) return
           const at = i - 1
@@ -151,102 +110,181 @@ export default function Hero() {
           timeline.fromTo(screen, { y: 0, yPercent: 100 }, { yPercent: 0, duration: 1 }, at)
           timeline.fromTo(medias[i], { yPercent: -15 }, { yPercent: 0, duration: 1 }, at)
           timeline.to(screens[i - 1], { yPercent: -15, duration: 1 }, at)
+          timeline.addLabel(`s${i}`, i)
         })
 
-        // Snap propio con dirección: el de ScrollTrigger pelea con la interpolación de Lenis.
-        // Un gesto que cruza SNAP_THRESHOLD del tramo avanza a la pantalla vecina en vez de rebotar
-        let timer: number | undefined
-        let touching = false
-        let from: number | null = null // pantalla en reposo al empezar el gesto
+        let index = 0
+        let animating = false
+        let lastEventAt = 0
+        let lastStepAt = 0
+        let freshGesture = true
+        let heroActive = false
+        let prevY = window.scrollY
+        let frame = 0
+        let tries = 0
 
-        const position = (y: number, trigger: ScrollTrigger) =>
-          ((y - trigger.start) / (trigger.end - trigger.start)) * LAST
-        const clampIndex = (n: number) => Math.min(LAST, Math.max(0, n))
+        // Un gesto = una pantalla. Cada evento de entrada (también durante la transición y la inercia)
+        // renueva lastEventAt: solo tras GESTURE_GAP de silencio el siguiente evento cuenta como gesto nuevo
+        const onInput = () => {
+          const now = performance.now()
+          freshGesture = now - lastEventAt >= GESTURE_GAP || now - lastStepAt > GESTURE_MAX
+          lastEventAt = now
+        }
 
-        const settle = () => {
-          const trigger = triggerRef.current
+        const release = () => {
+          animating = false
+        }
+
+        const show = (target: number) => {
+          if (target === index) return
+          index = target
+          lastStepAt = performance.now()
+          setCurrent(target)
+
+          if (instant) {
+            timeline.seek(`s${target}`)
+            return
+          }
+          animating = true
+          timeline.tweenTo(`s${target}`, {
+            duration: TRANSITION,
+            ease: 'power3.inOut',
+            onComplete: release,
+            onInterrupt: release,
+          })
+        }
+
+        const enterHero = () => {
+          if (heroActive) return
+          heroActive = true
+          // La inercia con la que se llegó arriba no debe contar como un gesto de la hero
+          lastEventAt = performance.now()
           const lenis = lenisRef.current
-          if (!trigger || touching) return
-          if (lenis?.isScrolling) return schedule()
-
-          const y = window.scrollY
-          const start = from
-          from = null
-          if (y < trigger.start || y > trigger.end) return
-
-          const f = position(y, trigger)
-          const base = start ?? Math.round(f)
-          const delta = f - base
-          const index =
-            Math.abs(delta) < 1
-              ? base + (delta > SNAP_THRESHOLD ? 1 : delta < -SNAP_THRESHOLD ? -1 : 0)
-              : Math.round(f)
-
-          const target = trigger.start + (clampIndex(index) / LAST) * (trigger.end - trigger.start)
-          if (Math.abs(target - y) > 1) scrollToY(target, 0.45)
-        }
-        const schedule = () => {
-          window.clearTimeout(timer)
-          timer = window.setTimeout(settle, SNAP_DELAY)
-        }
-        const onScroll = () => {
-          const trigger = triggerRef.current
-          if (from === null && trigger) from = clampIndex(Math.round(position(window.scrollY, trigger)))
-          schedule()
-        }
-        const onTouchStart = () => {
-          touching = true
-          window.clearTimeout(timer)
-        }
-        const onTouchEnd = () => {
-          touching = false
-          schedule()
+          if (lenis) {
+            lenis.scrollTo(0, { immediate: true, force: true })
+            lenis.stop()
+          } else {
+            window.scrollTo(0, 0)
+            html.style.overflow = 'hidden'
+          }
+          html.style.overscrollBehavior = 'none' // sin pull-to-refresh en móvil
+          section.style.touchAction = 'none'
+          observer.enable()
         }
 
-        window.addEventListener('scroll', onScroll, { passive: true })
-        window.addEventListener('touchstart', onTouchStart, { passive: true })
-        window.addEventListener('touchend', onTouchEnd, { passive: true })
-        window.addEventListener('touchcancel', onTouchEnd, { passive: true })
-
-        return () => {
-          window.clearTimeout(timer)
-          window.removeEventListener('scroll', onScroll)
-          window.removeEventListener('touchstart', onTouchStart)
-          window.removeEventListener('touchend', onTouchEnd)
-          window.removeEventListener('touchcancel', onTouchEnd)
-          triggerRef.current = null
+        const exitHero = () => {
+          if (!heroActive) return
+          heroActive = false
+          observer.disable()
+          html.style.overscrollBehavior = ''
+          html.style.overflow = ''
+          section.style.touchAction = ''
+          lenisRef.current?.start()
         }
-      })
 
-      // Sin cortinas ni parallax: pantallas apiladas que cambian de golpe en cada tramo
-      mm.add('(prefers-reduced-motion: reduce)', () => {
-        stepsRef.current = SCREENS.length
-        gsap.set(screens, { y: 0, yPercent: 0 })
-        gsap.set(medias, { yPercent: 0 })
+        const step = (direction: 1 | -1, fresh: boolean) => {
+          if (animating || !fresh) return
+          if (direction === 1 && index === LAST) {
+            // Gesto hacia abajo en la última pantalla: se suelta la página
+            exitHero()
+            const lenis = lenisRef.current
+            if (lenis) lenis.scrollTo(NUDGE, { duration: 0.6 })
+            else window.scrollBy({ top: NUDGE })
+            return
+          }
+          show(Math.min(LAST, Math.max(0, index + direction)))
+        }
 
-        const show = (index: number) =>
-          screens.forEach((screen, i) => gsap.set(screen, { visibility: i <= index ? 'visible' : 'hidden' }))
-        show(0)
-
-        triggerRef.current = ScrollTrigger.create({
-          trigger: section,
-          start: 'top top',
-          end: `+=${SCREENS.length * 100}%`,
-          pin: true,
-          invalidateOnRefresh: true,
-          snap: { snapTo: 1 / SCREENS.length, duration: { min: 0.1, max: 0.3 }, ease: 'power1.inOut' },
-          onUpdate: (self) => {
-            const index = Math.min(LAST, Math.floor(self.progress * SCREENS.length + 0.001))
-            if (index === currentRef.current) return
-            show(index)
-            updateCurrent(index)
-          },
+        // Modo hero: la página no scrollea, los gestos cambian de pantalla
+        const observer = Observer.create({
+          type: 'wheel,touch',
+          // -1 alinea rueda y touch: bajar la rueda y deslizar el dedo hacia arriba son ambos "onUp"
+          wheelSpeed: -1,
+          tolerance: 10,
+          preventDefault: true,
+          onChange: onInput,
+          onUp: () => step(1, freshGesture),
+          onDown: () => step(-1, freshGesture),
         })
+        observer.disable()
+
+        const toCatalog = () => {
+          const catalog = document.getElementById('catalog')
+          if (!catalog) return
+          exitHero()
+          const lenis = lenisRef.current
+          if (lenis) lenis.scrollTo(catalog, { duration: 1.4 })
+          else catalog.scrollIntoView()
+        }
+
+        controlsRef.current = {
+          next: () => {
+            if (animating) return
+            if (index === LAST) toCatalog()
+            else show(index + 1)
+          },
+          toCatalog,
+        }
+
+        const onKeyDown = (event: KeyboardEvent) => {
+          if (!heroActive || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return
+          const target = event.target as HTMLElement
+          if (target.closest('input, textarea, select, [contenteditable="true"]')) return
+          // Espacio sobre un botón o enlace enfocado lo activa: no es navegación
+          if (event.key === ' ' && target.closest('button, a')) return
+
+          let direction: 1 | -1 | 0 = 0
+          if (event.key === 'ArrowDown' || event.key === 'PageDown') direction = 1
+          else if (event.key === 'ArrowUp' || event.key === 'PageUp') direction = -1
+          else if (event.key === ' ') direction = event.shiftKey ? -1 : 1
+          if (!direction) return
+
+          event.preventDefault()
+          step(direction, !event.repeat)
+        }
+
+        // Al volver a scrollY 0 hacia arriba se recupera el modo hero en la pantalla en que se quedó
+        const onScroll = () => {
+          const y = window.scrollY
+          if (!heroActive && y <= 0 && prevY > 0) enterHero()
+          prevY = y
+        }
+
+        window.addEventListener('keydown', onKeyDown)
+        window.addEventListener('scroll', onScroll, { passive: true })
+
+        // Lenis nace en el efecto del padre, que corre después del de este componente
+        const init = () => {
+          if (!instant && !lenisRef.current && tries++ < 30) {
+            frame = requestAnimationFrame(init)
+            return
+          }
+          // Cada transición dura ~1 s: que ninguna foto llegue sin decodificar
+          section.querySelectorAll('img').forEach((img) => img.decode?.().catch(() => {}))
+
+          if (window.scrollY > 0) {
+            // Recarga con la página ya scrolleada: la hero queda en su última pantalla
+            index = LAST
+            timeline.seek(`s${LAST}`)
+          } else {
+            enterHero()
+          }
+          setCurrent(index)
+        }
+        frame = requestAnimationFrame(init)
 
         return () => {
-          triggerRef.current = null
+          cancelAnimationFrame(frame)
+          window.removeEventListener('keydown', onKeyDown)
+          window.removeEventListener('scroll', onScroll)
+          observer.kill()
+          if (heroActive) exitHero()
+          controlsRef.current = null
         }
-      })
+      }
+
+      mm.add('(prefers-reduced-motion: no-preference)', () => setup(false))
+      mm.add('(prefers-reduced-motion: reduce)', () => setup(true))
     },
     { scope: sectionRef },
   )
@@ -283,7 +321,6 @@ export default function Hero() {
                   preload={i === 0}
                   loading="eager"
                   decoding="async"
-                  fetchPriority={i === 0 ? 'high' : 'low'}
                   sizes="100vw"
                   className="object-cover"
                   style={{ objectPosition: screen.objectPosition ?? '50% 50%' }}
@@ -366,7 +403,7 @@ export default function Hero() {
 
       <button
         type="button"
-        onClick={handleCounter}
+        onClick={() => controlsRef.current?.next()}
         aria-label={current === LAST ? 'Go to catalog' : `Next screen, ${current + 2} of ${SCREENS.length}`}
         className="absolute right-4 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-3 p-2 tabular-nums md:right-8"
       >
@@ -379,6 +416,10 @@ export default function Hero() {
 
       <a
         href="#catalog"
+        onClick={(event) => {
+          event.preventDefault()
+          controlsRef.current?.toCatalog()
+        }}
         className="absolute bottom-6 left-5 z-20 transition-opacity hover:opacity-60 md:bottom-8 md:left-8"
       >
         Catalog ↓
@@ -386,16 +427,11 @@ export default function Hero() {
 
       {/* En la pantalla de marca solo van las redes */}
       {!light && (
-        <button
-          type="button"
-          onClick={() => goTo(current)}
-          aria-label={`Show ${SCREENS[current].label}`}
-          className="absolute bottom-6 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap p-2 text-[10px] md:bottom-8"
-        >
+        <p className="pointer-events-none absolute bottom-6 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap p-2 text-[10px] md:bottom-8">
           <span key={current} className="hero-swap block">
             {SCREENS[current].label}
           </span>
-        </button>
+        </p>
       )}
     </section>
   )

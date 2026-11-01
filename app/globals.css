@@ -37,6 +37,11 @@
   }
 }
 
+/* Evita el salto de layout al quitar y poner la barra de scroll (modo hero de Lenis) */
+html {
+  scrollbar-gutter: stable;
+}
+
 a:focus-visible,
 button:focus-visible {
   outline: 1px solid currentColor;
