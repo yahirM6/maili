@@ -20,18 +20,25 @@
   }
 }
 
-/* En CSS y no en JS: el titular debe verse aunque el JavaScript no llegue a cargar */
-@keyframes hero-title-fade {
+@keyframes hero-swap {
   from {
     opacity: 0;
+    transform: translateY(6px);
   }
 }
 
-.hero-title-fade {
-  animation: hero-title-fade 1.6s ease-out;
+.hero-swap {
+  animation: hero-swap 0.35s ease-out;
 }
 
-a:focus-visible {
+@media (prefers-reduced-motion: reduce) {
+  .hero-swap {
+    animation: none;
+  }
+}
+
+a:focus-visible,
+button:focus-visible {
   outline: 1px solid currentColor;
   outline-offset: 4px;
 }

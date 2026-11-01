@@ -17,8 +17,6 @@ export default function EditProductPage(){
 
 
 
-
-
     return(
         <h1>Aqui va el el edit variant product</h1>
     )
