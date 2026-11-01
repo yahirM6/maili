@@ -10,6 +10,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-cormorant);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -17,6 +18,22 @@
     --background: #0a0a0a;
     --foreground: #ededed;
   }
+}
+
+/* En CSS y no en JS: el titular debe verse aunque el JavaScript no llegue a cargar */
+@keyframes hero-title-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.hero-title-fade {
+  animation: hero-title-fade 1.6s ease-out;
+}
+
+a:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 4px;
 }
 
 body {
