@@ -59,10 +59,10 @@ export default function ProductCarousel({ id, title, products }: ProductCarousel
         {products.map((product, index) => (
           <li
             key={product.id}
-            data-reveal={index < 4 ? index * 0.08 : undefined}
-            className="shrink-0 basis-[68%] snap-start sm:basis-[calc((100%-16px)/2.4)] lg:basis-[calc((100%-24px)/4)] min-[1600px]:basis-[calc((100%-32px)/5)]"
+            data-reveal={index < 5 ? index * 0.09 : undefined}
+            className="shrink-0 basis-[68%] snap-start sm:basis-[calc((100%-16px)/2.4)] lg:basis-[calc((100%-24px)/4)] min-[100rem]:basis-[calc((100%-32px)/5)]"
           >
-            <ProductCard product={product} sizes="(min-width: 1024px) 25vw, (min-width: 640px) 42vw, 68vw" />
+            <ProductCard product={product} sizes="(min-width: 1600px) 20vw, (min-width: 1024px) 25vw, (min-width: 640px) 42vw, 68vw" />
           </li>
         ))}
       </ul>

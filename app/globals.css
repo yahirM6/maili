@@ -23,17 +23,6 @@
   --font-garamond: var(--font-eb-garamond);
 }
 
-@keyframes hero-swap {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-}
-
-.hero-swap {
-  animation: hero-swap 0.35s ease-out;
-}
-
 /* Cambio de página del grid Molten */
 @keyframes page-swap {
   from {
@@ -47,13 +36,30 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-swap,
   .page-swap {
     animation: none;
   }
 }
 
-/* Evita el salto de layout al quitar y poner la barra de scroll (modo hero de Lenis) */
+/*
+ * Entrada de la página: lo marcado con data-intro arranca oculto solo si hay JS (clase .js
+ * puesta en layout) y animaciones permitidas; GSAP lo revela. Si el JS fallara, a los 3 s
+ * se muestra solo para que la página nunca quede en blanco.
+ */
+@keyframes intro-fallback {
+  to {
+    visibility: visible;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html.js [data-intro] {
+    visibility: hidden;
+    animation: intro-fallback 0s 3s forwards;
+  }
+}
+
+/* Mantiene fijo el ancho del contenido aunque cambie la barra de scroll */
 html {
   scrollbar-gutter: stable;
 }
