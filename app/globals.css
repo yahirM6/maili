@@ -1,23 +1,26 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Paleta cálida de la home: fondo, tarjetas de producto, tinta, líneas y acento */
+  --background: #f5f2f1;
+  --foreground: #373736;
+  --tile: #efede9;
+  --line: #c4c2c1;
+  --muted: #d0cecd;
+  --accent: #ffa38b;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-tile: var(--tile);
+  --color-line: var(--line);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-serif: var(--font-cormorant);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-garamond: var(--font-eb-garamond);
 }
 
 @keyframes hero-swap {
@@ -31,8 +34,21 @@
   animation: hero-swap 0.35s ease-out;
 }
 
+/* Cambio de página del grid Molten */
+@keyframes page-swap {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+.page-swap {
+  animation: page-swap 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .hero-swap {
+  .hero-swap,
+  .page-swap {
     animation: none;
   }
 }
@@ -51,5 +67,14 @@ button:focus-visible {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Carruseles horizontales: se desliza con dedo o trackpad pero sin barra visible */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
