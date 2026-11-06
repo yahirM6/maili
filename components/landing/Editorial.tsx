@@ -54,8 +54,8 @@ export default function Editorial() {
   )
 
   return (
-    <section ref={sectionRef} aria-label="Editorial" className="relative bg-background motion-safe:h-[240svh]">
-      <div className="sticky top-16 h-[calc(100svh-4rem)] overflow-hidden md:top-[86px] md:h-[calc(100svh-86px)]">
+    <section ref={sectionRef} aria-label="Editorial" data-snap="start end" className="relative snap-start bg-background motion-safe:h-[240svh] md:snap-align-none">
+      <div className="sticky top-0 h-svh overflow-hidden md:top-[86px] md:h-[calc(100svh-86px)]">
         <p
           data-marquee
           aria-hidden="true"

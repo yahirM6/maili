@@ -15,6 +15,8 @@ export default function Home() {
       <SiteHeader />
       {/* z-10 y fondo propio: el contenido tapa al footer, que espera fijo detrás (se destapa al final) */}
       <main className="relative z-10 bg-background font-sans text-foreground">
+        {/* Punto de snap en el tope para móvil: la hero es sticky y no sirve como área de snap */}
+        <div aria-hidden="true" className="absolute inset-x-0 top-0 h-px snap-start md:hidden" />
         <Hero />
         {/* Sube encima de la hero, que se queda fija (sticky) */}
         <div className="relative z-10 bg-background">

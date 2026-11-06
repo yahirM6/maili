@@ -1,8 +1,10 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { BagIcon, MenuIcon, SearchIcon, UserIcon } from '@/components/landing/icons'
 import { useLenisRef } from '@/components/landing/SmoothScroll'
 import { useBagCount } from '@/hooks/useBagCount'
+import { ScrollTrigger } from '@/lib/gsap'
 import { NAV_LINKS } from '@/lib/home-data'
 import { scrollToTarget } from '@/lib/scroll'
 
@@ -10,9 +12,22 @@ import { scrollToTarget } from '@/lib/scroll'
 export default function SiteHeader() {
   const bagCount = useBagCount()
   const lenisRef = useLenisRef()
+  const [scrolled, setScrolled] = useState(false)
+
+  // Transparente sobre la hero; con fondo en cuanto se baja, para leerse sobre las secciones claras.
+  // ScrollTrigger ya va sincronizado con Lenis: no hace falta otro listener de scroll
+  useEffect(() => {
+    const trigger = ScrollTrigger.create({ start: 40, end: 'max', onToggle: (self) => setScrolled(self.isActive) })
+    return () => trigger.kill()
+  }, [])
 
   return (
-    <header data-site-header className="fixed inset-x-0 top-0 z-50 bg-background/95 backdrop-blur-md">
+    <header
+      data-site-header
+      className={`fixed inset-x-0 top-0 z-50 transition-[background-color,backdrop-filter] duration-500 ${
+        scrolled ? 'bg-background/95 backdrop-blur-md' : 'bg-transparent'
+      }`}
+    >
       <div className="grid h-16 grid-cols-[1fr_auto_1fr] items-center px-5 md:h-[86px] md:px-[60px]">
         <div className="flex items-center">
           <button type="button" data-intro aria-label="Open menu" className="-ml-1 p-1 md:hidden">

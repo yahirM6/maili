@@ -67,7 +67,7 @@ export default function Footer() {
   return (
     <footer
       ref={footerRef}
-      className="z-0 overflow-hidden bg-background px-5 pb-16 pt-8 md:sticky md:bottom-0 md:px-[60px] md:pb-20 md:pt-[42px]"
+      className="z-0 snap-start overflow-hidden bg-background px-5 pb-16 pt-8 md:sticky md:bottom-0 md:px-[60px] md:pb-20 md:pt-[42px]"
     >
       <div data-footer-inner>
         <div data-footer-line aria-hidden="true" className="h-px origin-left bg-line" />
