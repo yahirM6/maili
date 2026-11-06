@@ -124,6 +124,11 @@ export const COLLECTIONS: Collection[] = [
 export const EDITORIAL = {
   image: '/images/model/model-horizontal.jpg',
   alt: 'Model in burgundy lace lying down, wearing gold rings and bracelets',
+  /** Pie que se ve bajo la foto mientras es pequeña; la foto lo cubre al crecer */
+  caption: 'The Lace Edit',
+  cta: { label: 'Discover', href: '#' },
+  /** Texto gigante y tenue que cruza detrás de la foto */
+  marquee: 'Maili · Fine Jewelry · Maili · Fine Jewelry ·',
 }
 
 export const MOLTEN_FEATURE = {

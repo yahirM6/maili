@@ -14,13 +14,14 @@ export function useReveal(scope: RefObject<HTMLElement | null>) {
 
       mm.add('(prefers-reduced-motion: no-preference)', () => {
         gsap.utils.toArray<HTMLElement>('[data-reveal]').forEach((element) => {
+          // Subida corta con frenado largo (expo): se siente más pausado que un fade-in común
           gsap.from(element, {
-            y: 48,
+            y: 40,
             autoAlpha: 0,
-            duration: 1.2,
+            duration: 1.3,
             delay: Number(element.dataset.reveal) || 0,
-            ease: 'power3.out',
-            scrollTrigger: { trigger: element, start: 'top 90%', once: true },
+            ease: 'expo.out',
+            scrollTrigger: { trigger: element, start: 'top 88%', once: true },
           })
         })
       })

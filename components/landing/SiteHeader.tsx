@@ -6,7 +6,7 @@ import { useBagCount } from '@/hooks/useBagCount'
 import { NAV_LINKS } from '@/lib/home-data'
 import { scrollToTarget } from '@/lib/scroll'
 
-/** Barra fija clara, siempre visible. */
+/** Barra fija clara, siempre visible. Sus elementos (data-intro) los revela la entrada de la hero. */
 export default function SiteHeader() {
   const bagCount = useBagCount()
   const lenisRef = useLenisRef()
@@ -15,7 +15,7 @@ export default function SiteHeader() {
     <header data-site-header className="fixed inset-x-0 top-0 z-50 bg-background/95 backdrop-blur-md">
       <div className="grid h-16 grid-cols-[1fr_auto_1fr] items-center px-5 md:h-[86px] md:px-[60px]">
         <div className="flex items-center">
-          <button type="button" aria-label="Open menu" className="-ml-1 p-1 md:hidden">
+          <button type="button" data-intro aria-label="Open menu" className="-ml-1 p-1 md:hidden">
             <MenuIcon className="size-6" />
           </button>
           <nav aria-label="Main" className="hidden items-center gap-5 md:flex">
@@ -23,6 +23,7 @@ export default function SiteHeader() {
               <a
                 key={link.label}
                 href={link.href}
+                data-intro
                 className="text-xs uppercase tracking-[0.02em] transition-opacity hover:opacity-60"
               >
                 {link.label}
@@ -38,19 +39,21 @@ export default function SiteHeader() {
             scrollToTarget(lenisRef.current, 0)
           }}
           aria-label="Maili, back to top"
+          data-intro
           className="font-serif text-[2rem] leading-none tracking-[-0.01em] md:text-[2.625rem]">
           Maili
         </a>
 
         <div className="flex items-center justify-end gap-4 md:gap-6">
-          <button type="button" aria-label="Search" className="hidden p-1 transition-opacity hover:opacity-60 md:block">
+          <button type="button" data-intro aria-label="Search" className="hidden p-1 transition-opacity hover:opacity-60 md:block">
             <SearchIcon className="size-[26px]" />
           </button>
-          <button type="button" aria-label="Log in" className="hidden p-1 transition-opacity hover:opacity-60 md:block">
+          <button type="button" data-intro aria-label="Log in" className="hidden p-1 transition-opacity hover:opacity-60 md:block">
             <UserIcon className="size-[26px]" />
           </button>
           <button
             type="button"
+            data-intro
             aria-label={`Bag, ${bagCount} ${bagCount === 1 ? 'item' : 'items'}`}
             className="relative p-1 transition-opacity hover:opacity-60"
           >

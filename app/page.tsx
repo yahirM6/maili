@@ -13,13 +13,17 @@ export default function Home() {
   return (
     <SmoothScroll>
       <SiteHeader />
-      <main className="bg-background font-sans text-foreground">
+      {/* z-10 y fondo propio: el contenido tapa al footer, que espera fijo detrás (se destapa al final) */}
+      <main className="relative z-10 bg-background font-sans text-foreground">
         <Hero />
-        <ProductCarousel id="catalog" title="New In" products={NEW_IN} />
-        <Collections />
-        <ProductCarousel title="Bestsellers" products={BESTSELLERS} />
-        <Editorial />
-        <MoltenCollection />
+        {/* Sube encima de la hero, que se queda fija (sticky) */}
+        <div className="relative z-10 bg-background">
+          <ProductCarousel id="catalog" title="New In" products={NEW_IN} />
+          <Collections />
+          <ProductCarousel title="Bestsellers" products={BESTSELLERS} />
+          <Editorial />
+          <MoltenCollection />
+        </div>
       </main>
       <Footer />
     </SmoothScroll>
