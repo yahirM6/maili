@@ -1,8 +1,16 @@
 'use client'
 
 import { useRef } from 'react'
-import Image from 'next/image'
+import { getImageProps } from 'next/image'
 import { gsap, SplitText, useGSAP } from '@/lib/gsap'
+
+const heroImage = { alt: 'Model wearing Maili jewelry', fill: true, sizes: '100vw', loading: 'eager', fetchPriority: 'high' } as const
+const { props: heroDesktop } = getImageProps({
+  ...heroImage,
+  src: '/images/hero/hero-section.jpg',
+  className: 'object-cover object-[70%_center]',
+})
+const { props: heroMobile } = getImageProps({ ...heroImage, src: '/images/hero/hero-section-movil.jpg' })
 
 export default function Hero() {
   const sectionRef = useRef<HTMLElement>(null)
@@ -97,18 +105,16 @@ export default function Hero() {
     >
       <div data-hero-media data-intro className="absolute inset-0 will-change-transform">
         <div data-hero-image className="absolute inset-0">
-          <Image
-            src="/images/hero/hero-section.jpg"
-            alt="Model wearing Maili jewelry"
-            fill
-            preload
-            sizes="100vw"
-            className="object-cover object-[70%_center]"
-          />
+          {/* Dos fotos según el ancho; <picture> hace que el navegador descargue solo la que corresponde */}
+          <picture>
+            <source media="(max-width: 767px)" srcSet={heroMobile.srcSet} sizes="100vw" />
+            {/* eslint-disable-next-line jsx-a11y/alt-text -- props de next/image, con alt incluido */}
+            <img {...heroDesktop} />
+          </picture>
         </div>
       </div>
 
-      <div className="relative z-10 flex h-full max-w-[44rem] flex-col items-start justify-center px-5 pt-16 md:px-[60px] md:pt-[86px] lg:ml-[80px] lg:px-0">
+      <div className="relative z-10 flex h-full max-w-[44rem] flex-col items-start justify-end px-5 pb-12 pt-16 md:justify-center md:px-[60px] md:pb-0 md:pt-[86px] lg:ml-[80px] lg:px-0">
         <h1
           data-hero-lines
           data-intro

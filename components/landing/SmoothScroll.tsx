@@ -78,9 +78,14 @@ export default function SmoothScroll({ children }: { children: ReactNode }) {
     const resizeObserver = new ResizeObserver(invalidate)
     resizeObserver.observe(document.body)
 
+    // Tras el salto se descarta la cola de inercia del gesto anterior. La inercia del touchpad puede durar
+    // 1-2 s, así que no se espera a que muera: un gesto nuevo se reconoce por el silencio de la rueda o
+    // porque la magnitud sube (la cola de inercia solo decrece)
+    let doneAt = 0
+    let lastMagnitude = 0
     const settle = () => {
-      if (performance.now() - lastWheel < 150) {
-        settleTimer = setTimeout(settle, 60)
+      if (performance.now() - lastWheel < 100) {
+        settleTimer = setTimeout(settle, 40)
         return
       }
       waiting = false
@@ -91,13 +96,18 @@ export default function SmoothScroll({ children }: { children: ReactNode }) {
       if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return // swipe horizontal (carruseles)
       if ((event.target as Element | null)?.closest('[data-lenis-prevent]')) return
 
-      lastWheel = performance.now()
+      const now = performance.now()
+      const magnitude = Math.abs(event.deltaY)
+      const rising = magnitude > lastMagnitude * 1.5 && magnitude >= 8
+      lastWheel = now
+      lastMagnitude = magnitude
+      if (waiting && !busy && now - doneAt > 250 && rising) waiting = false
       if (busy || waiting) {
         event.preventDefault()
         event.stopImmediatePropagation()
         return
       }
-      if (Math.abs(event.deltaY) < 4) return
+      if (magnitude < 4) return
 
       const scroll = lenis.scroll
       const list = snapPoints()
@@ -115,6 +125,7 @@ export default function SmoothScroll({ children }: { children: ReactNode }) {
         onComplete: () => {
           busy = false
           waiting = true
+          doneAt = performance.now()
           settle()
         },
       })

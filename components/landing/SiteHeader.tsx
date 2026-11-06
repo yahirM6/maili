@@ -24,9 +24,8 @@ export default function SiteHeader() {
   return (
     <header
       data-site-header
-      className={`fixed inset-x-0 top-0 z-50 transition-[background-color,backdrop-filter] duration-500 ${
-        scrolled ? 'bg-background/95 backdrop-blur-md' : 'bg-transparent'
-      }`}
+      // Sin backdrop-blur: con el fondo casi opaco no aporta y repinta el blur en cada frame de scroll
+      className={`fixed inset-x-0 top-0 z-50 transition-colors duration-500 ${scrolled ? 'bg-background/95' : 'bg-transparent'}`}
     >
       <div className="grid h-16 grid-cols-[1fr_auto_1fr] items-center px-5 md:h-[86px] md:px-[60px]">
         <div className="flex items-center">
