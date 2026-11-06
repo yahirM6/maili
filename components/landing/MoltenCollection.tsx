@@ -18,10 +18,10 @@ export default function MoltenCollection() {
   const visible = MOLTEN.slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE)
 
   return (
-    <section ref={sectionRef} aria-label={`${MOLTEN_FEATURE.title} Collection`} className="grid bg-background md:min-h-[min(100svh,60vw)] md:grid-cols-2">
+    <section ref={sectionRef} aria-label={`${MOLTEN_FEATURE.title} Collection`} data-snap className="grid bg-background md:h-svh md:grid-cols-2 md:grid-rows-1">
       <a
         href={MOLTEN_FEATURE.href}
-        className="group relative block aspect-[4/5] overflow-hidden bg-tile md:aspect-auto"
+        className="group relative block h-svh snap-start overflow-hidden bg-tile md:h-auto md:snap-align-none"
       >
         <Image
           src={MOLTEN_FEATURE.image}
@@ -42,7 +42,7 @@ export default function MoltenCollection() {
         </div>
       </a>
 
-      <div className="flex flex-col px-5 pb-8 pt-10 md:justify-center md:px-[60px] md:py-16">
+      <div className="flex min-h-svh snap-start flex-col justify-center px-5 pb-8 pt-20 md:min-h-0 md:snap-align-none md:px-[60px] md:pb-16 md:pt-[86px]">
         <div className="w-full md:mx-auto md:max-w-[clamp(30rem,32vw,44rem)]">
         <ul key={page} className="page-swap grid grid-cols-2 gap-x-3 gap-y-6 md:gap-x-5 md:gap-y-6">
           {visible.map((product, index) => (

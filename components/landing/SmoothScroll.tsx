@@ -48,7 +48,95 @@ export default function SmoothScroll({ children }: { children: ReactNode }) {
     gsap.ticker.add(tick)
     gsap.ticker.lagSmoothing(0)
 
+    // Escritorio: un gesto de rueda/touchpad salta a la siguiente sección (en móvil lo hace el scroll-snap CSS).
+    // Puntos: el tope (hero), cada [data-snap] ("start end" = inicio y fin) y el final de la página.
+    // Se miden una vez y se invalidan solo cuando cambia el tamaño de la página (imágenes, fuentes, resize).
+    // Mientras dura el salto, y hasta que la inercia del touchpad se apaga, los eventos de rueda se
+    // descartan: la cola del gesto no mueve la página ni dispara otro salto
+    const desktop = window.matchMedia('(min-width: 768px)')
+    let busy = false
+    let waiting = false
+    let lastWheel = 0
+    let settleTimer: ReturnType<typeof setTimeout> | undefined
+    let points: number[] | null = null
+
+    const snapPoints = () => {
+      if (points) return points
+      const list = [0, lenis.limit]
+      document.querySelectorAll<HTMLElement>('[data-snap]').forEach((element) => {
+        const top = element.getBoundingClientRect().top + lenis.scroll
+        const align = (element.dataset.snap ?? '').split(' ')
+        if (!align.includes('end') || align.includes('start')) list.push(top)
+        if (align.includes('end')) list.push(top + element.offsetHeight - window.innerHeight)
+      })
+      points = list.map(Math.round).sort((a, b) => a - b)
+      return points
+    }
+    const invalidate = () => {
+      points = null
+    }
+    const resizeObserver = new ResizeObserver(invalidate)
+    resizeObserver.observe(document.body)
+
+    // Tras el salto se descarta la cola de inercia del gesto anterior. La inercia del touchpad puede durar
+    // 1-2 s, así que no se espera a que muera: un gesto nuevo se reconoce por el silencio de la rueda o
+    // porque la magnitud sube (la cola de inercia solo decrece)
+    let doneAt = 0
+    let lastMagnitude = 0
+    const settle = () => {
+      if (performance.now() - lastWheel < 100) {
+        settleTimer = setTimeout(settle, 40)
+        return
+      }
+      waiting = false
+    }
+
+    const onWheel = (event: WheelEvent) => {
+      if (!desktop.matches || event.ctrlKey) return
+      if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return // swipe horizontal (carruseles)
+      if ((event.target as Element | null)?.closest('[data-lenis-prevent]')) return
+
+      const now = performance.now()
+      const magnitude = Math.abs(event.deltaY)
+      const rising = magnitude > lastMagnitude * 1.5 && magnitude >= 8
+      lastWheel = now
+      lastMagnitude = magnitude
+      if (waiting && !busy && now - doneAt > 250 && rising) waiting = false
+      if (busy || waiting) {
+        event.preventDefault()
+        event.stopImmediatePropagation()
+        return
+      }
+      if (magnitude < 4) return
+
+      const scroll = lenis.scroll
+      const list = snapPoints()
+      const next = event.deltaY > 0 ? list.find((point) => point > scroll + 2) : list.findLast((point) => point < scroll - 2)
+      if (next === undefined) return // ya está en un extremo
+
+      event.preventDefault()
+      event.stopImmediatePropagation()
+      busy = true
+      lenis.scrollTo(next, {
+        duration: 1.2,
+        easing: (t) => (t === 1 ? 1 : 1 - 2 ** (-10 * t)),
+        lock: true,
+        force: true,
+        onComplete: () => {
+          busy = false
+          waiting = true
+          doneAt = performance.now()
+          settle()
+        },
+      })
+    }
+    // En captura y no pasiva: debe llegar antes que Lenis y poder cancelarle el evento
+    window.addEventListener('wheel', onWheel, { capture: true, passive: false })
+
     return () => {
+      window.removeEventListener('wheel', onWheel, { capture: true })
+      resizeObserver.disconnect()
+      clearTimeout(settleTimer)
       gsap.ticker.remove(tick)
       gsap.ticker.lagSmoothing(500, 33)
       lenis.destroy()

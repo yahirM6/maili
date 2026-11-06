@@ -1,8 +1,16 @@
 'use client'
 
 import { useRef } from 'react'
-import Image from 'next/image'
+import { getImageProps } from 'next/image'
 import { gsap, SplitText, useGSAP } from '@/lib/gsap'
+
+const heroImage = { alt: 'Model wearing Maili jewelry', fill: true, sizes: '100vw', loading: 'eager', fetchPriority: 'high' } as const
+const { props: heroDesktop } = getImageProps({
+  ...heroImage,
+  src: '/images/hero/hero-section.jpg',
+  className: 'object-cover object-[70%_center]',
+})
+const { props: heroMobile } = getImageProps({ ...heroImage, src: '/images/hero/hero-section-movil.jpg' })
 
 export default function Hero() {
   const sectionRef = useRef<HTMLElement>(null)
@@ -93,24 +101,20 @@ export default function Hero() {
   return (
     <section
       ref={sectionRef}
-      className="sticky top-16 z-0 mt-16 h-[calc(100svh-4rem)] min-h-120 overflow-hidden bg-neutral-100 md:top-[86px] md:mt-[86px] md:h-[calc(100svh-86px)]"
+      className="sticky top-0 z-0 h-svh min-h-120 overflow-hidden bg-neutral-100"
     >
       <div data-hero-media data-intro className="absolute inset-0 will-change-transform">
         <div data-hero-image className="absolute inset-0">
-          <Image
-            src="/images/hero/hero-section.jpg"
-            alt="Model wearing Maili jewelry"
-            fill
-            preload
-            sizes="100vw"
-            className="object-cover object-[70%_center]"
-          />
+          {/* Dos fotos según el ancho; <picture> hace que el navegador descargue solo la que corresponde */}
+          <picture>
+            <source media="(max-width: 767px)" srcSet={heroMobile.srcSet} sizes="100vw" />
+            {/* eslint-disable-next-line jsx-a11y/alt-text -- props de next/image, con alt incluido */}
+            <img {...heroDesktop} />
+          </picture>
         </div>
       </div>
-      {/* En móvil el texto cae sobre la foto: velo para mantener la legibilidad */}
-      <div aria-hidden="true" className="absolute inset-0 bg-white/40 md:hidden" />
 
-      <div className="relative z-10 flex h-full max-w-[44rem] flex-col items-start justify-center px-5 md:px-[60px] lg:ml-[80px] lg:px-0">
+      <div className="relative z-10 flex h-full max-w-[44rem] flex-col items-start justify-end px-5 pb-12 pt-16 md:justify-center md:px-[60px] md:pb-0 md:pt-[86px] lg:ml-[80px] lg:px-0">
         <h1
           data-hero-lines
           data-intro
