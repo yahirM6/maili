@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { BagIcon, MenuIcon, SearchIcon, UserIcon } from '@/components/landing/icons'
 import { useLenisRef } from '@/components/landing/SmoothScroll'
@@ -8,36 +9,45 @@ import { ScrollTrigger } from '@/lib/gsap'
 import { NAV_LINKS } from '@/lib/home-data'
 import { scrollToTarget } from '@/lib/scroll'
 
-/** Barra fija clara, siempre visible. Sus elementos (data-intro) los revela la entrada de la hero. */
-export default function SiteHeader() {
+/**
+ * Barra fija clara, siempre visible.
+ * - home: transparente sobre la hero; sus elementos (data-intro) los revela la entrada de la hero.
+ * - page: el resto de la tienda; siempre con fondo y sin animación de entrada.
+ */
+export default function SiteHeader({ variant = 'home' }: { variant?: 'home' | 'page' }) {
+  const home = variant === 'home'
   const bagCount = useBagCount()
   const lenisRef = useLenisRef()
   const [scrolled, setScrolled] = useState(false)
+  // Fuera de la home no existe la animación que los revela: no se marcan para no quedar ocultos
+  const intro = home ? { 'data-intro': true } : {}
 
   // Transparente sobre la hero; con fondo en cuanto se baja, para leerse sobre las secciones claras.
   // ScrollTrigger ya va sincronizado con Lenis: no hace falta otro listener de scroll
   useEffect(() => {
+    if (!home) return
     const trigger = ScrollTrigger.create({ start: 40, end: 'max', onToggle: (self) => setScrolled(self.isActive) })
     return () => trigger.kill()
-  }, [])
+  }, [home])
 
   return (
     <header
       data-site-header
       // Sin backdrop-blur: con el fondo casi opaco no aporta y repinta el blur en cada frame de scroll
-      className={`fixed inset-x-0 top-0 z-50 transition-colors duration-500 ${scrolled ? 'bg-background/95' : 'bg-transparent'}`}
+      className={`fixed inset-x-0 top-0 z-50 transition-colors duration-500 ${scrolled || !home ? 'bg-background/95' : 'bg-transparent'}`}
     >
       <div className="grid h-16 grid-cols-[1fr_auto_1fr] items-center px-5 md:h-[86px] md:px-[60px]">
         <div className="flex items-center">
-          <button type="button" data-intro aria-label="Open menu" className="-ml-1 p-1 md:hidden">
+          <button type="button" {...intro} aria-label="Open menu" className="-ml-1 p-1 md:hidden">
             <MenuIcon className="size-6" />
           </button>
           <nav aria-label="Main" className="hidden items-center gap-5 md:flex">
             {NAV_LINKS.map((link) => (
               <a
                 key={link.label}
-                href={link.href}
-                data-intro
+                // Los anclas de la home (#catalog) se vuelven rutas a la home desde otras páginas
+                href={!home && link.href.startsWith('#') ? `/${link.href}` : link.href}
+                {...intro}
                 className="text-xs uppercase tracking-[0.02em] transition-opacity hover:opacity-60"
               >
                 {link.label}
@@ -46,28 +56,35 @@ export default function SiteHeader() {
           </nav>
         </div>
 
-        <a
-          href="#"
-          onClick={(event) => {
-            event.preventDefault()
-            scrollToTarget(lenisRef.current, 0)
-          }}
-          aria-label="Maili, back to top"
-          data-intro
-          className="font-serif text-[2rem] leading-none tracking-[-0.01em] md:text-[2.625rem]">
-          Maili
-        </a>
+        {home ? (
+          <a
+            href="#"
+            onClick={(event) => {
+              event.preventDefault()
+              scrollToTarget(lenisRef.current, 0)
+            }}
+            aria-label="Maili, back to top"
+            data-intro
+            className="font-serif text-[2rem] leading-none tracking-[-0.01em] md:text-[2.625rem]"
+          >
+            Maili
+          </a>
+        ) : (
+          <Link href="/" aria-label="Maili, home" className="font-serif text-[2rem] leading-none tracking-[-0.01em] md:text-[2.625rem]">
+            Maili
+          </Link>
+        )}
 
         <div className="flex items-center justify-end gap-4 md:gap-6">
-          <button type="button" data-intro aria-label="Search" className="hidden p-1 transition-opacity hover:opacity-60 md:block">
+          <button type="button" {...intro} aria-label="Search" className="hidden p-1 transition-opacity hover:opacity-60 md:block">
             <SearchIcon className="size-[26px]" />
           </button>
-          <button type="button" data-intro aria-label="Log in" className="hidden p-1 transition-opacity hover:opacity-60 md:block">
+          <button type="button" {...intro} aria-label="Log in" className="hidden p-1 transition-opacity hover:opacity-60 md:block">
             <UserIcon className="size-[26px]" />
           </button>
           <button
             type="button"
-            data-intro
+            {...intro}
             aria-label={`Bag, ${bagCount} ${bagCount === 1 ? 'item' : 'items'}`}
             className="relative p-1 transition-opacity hover:opacity-60"
           >

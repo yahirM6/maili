@@ -64,10 +64,10 @@ html {
   scrollbar-gutter: stable;
 }
 
-/* Móvil: cada sección ocupa la pantalla y el scroll salta de una a otra (los puntos de snap están en cada sección).
-   En escritorio lo hace SmoothScroll con la rueda */
+/* Móvil, solo en páginas marcadas con data-section-snap (la home): cada sección ocupa la pantalla y el
+   scroll salta de una a otra. En escritorio lo hace SmoothScroll con la rueda */
 @media (max-width: 767px) {
-  html {
+  html:has([data-section-snap]) {
     scroll-snap-type: y mandatory;
   }
 }

@@ -11,10 +11,10 @@ import { BESTSELLERS, NEW_IN } from '@/lib/home-data'
 // Home estática: todo el contenido sale de lib/home-data.ts
 export default function Home() {
   return (
-    <SmoothScroll>
+    <SmoothScroll sectionSnap>
       <SiteHeader />
       {/* z-10 y fondo propio: el contenido tapa al footer, que espera fijo detrás (se destapa al final) */}
-      <main className="relative z-10 bg-background font-sans text-foreground">
+      <main data-section-snap className="relative z-10 bg-background font-sans text-foreground">
         {/* Punto de snap en el tope para móvil: la hero es sticky y no sirve como área de snap */}
         <div aria-hidden="true" className="absolute inset-x-0 top-0 h-px snap-start md:hidden" />
         <Hero />

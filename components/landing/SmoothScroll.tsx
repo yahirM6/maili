@@ -16,7 +16,12 @@ export function useLenisRef() {
   return lenisRef
 }
 
-export default function SmoothScroll({ children }: { children: ReactNode }) {
+/**
+ * Scroll suave (Lenis) para las páginas de la tienda.
+ * `sectionSnap`: en escritorio, cada gesto de rueda salta a la siguiente sección ([data-snap]). Solo tiene
+ * sentido en la home, hecha de secciones a pantalla completa; en el resto el scroll es libre.
+ */
+export default function SmoothScroll({ children, sectionSnap = false }: { children: ReactNode; sectionSnap?: boolean }) {
   const lenisRef = useRef<Lenis | null>(null)
 
   // Enlaces internos: "#" es un marcador sin destino (no debe saltar arriba ni reactivar la hero);
@@ -47,6 +52,15 @@ export default function SmoothScroll({ children }: { children: ReactNode }) {
     const tick = (time: number) => lenis.raf(time * 1000)
     gsap.ticker.add(tick)
     gsap.ticker.lagSmoothing(0)
+
+    if (!sectionSnap) {
+      return () => {
+        gsap.ticker.remove(tick)
+        gsap.ticker.lagSmoothing(500, 33)
+        lenis.destroy()
+        lenisRef.current = null
+      }
+    }
 
     // Escritorio: un gesto de rueda/touchpad salta a la siguiente sección (en móvil lo hace el scroll-snap CSS).
     // Puntos: el tope (hero), cada [data-snap] ("start end" = inicio y fin) y el final de la página.
@@ -142,7 +156,7 @@ export default function SmoothScroll({ children }: { children: ReactNode }) {
       lenis.destroy()
       lenisRef.current = null
     }
-  }, [])
+  }, [sectionSnap])
 
   return <LenisContext.Provider value={lenisRef}>{children}</LenisContext.Provider>
 }

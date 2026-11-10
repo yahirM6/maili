@@ -171,4 +171,5 @@ export const SOCIAL_LINKS = [
   { id: 'pinterest', label: 'Pinterest', href: '#' },
 ] as const
 
-export const formatPrice = (value: number) => `$${value.toFixed(2)}`
+export const formatPrice = (value: number) =>
+  `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
