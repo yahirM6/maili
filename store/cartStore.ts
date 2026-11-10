@@ -11,6 +11,9 @@ export interface CartItem {
   quantity: number
   max_stock: number
   engraving_text?: string
+  /** Para mostrar el artículo en la bolsa sin volver a consultar la base */
+  image?: string
+  slug?: string
 }
 
 interface CartState {
@@ -28,13 +31,16 @@ export const useCartStore = create<CartState>()(
       
       addItem: (newItem) => {
         set((state) => {
-          const existingItem = state.items.find((item) => item.variant_id === newItem.variant_id)
+          // Misma variante con otro grabado = otra pieza distinta en la bolsa
+          const sameLine = (item: CartItem) =>
+            item.variant_id === newItem.variant_id && (item.engraving_text ?? '') === (newItem.engraving_text ?? '')
+          const existingItem = state.items.find(sameLine)
           
           // Si ya está en el carrito, sumamos la cantidad (respetando el límite de stock real)
           if (existingItem) {
             return {
-              items: state.items.map((item) => 
-                item.variant_id === newItem.variant_id
+              items: state.items.map((item) =>
+                sameLine(item)
                   ? { ...item, quantity: Math.min(item.quantity + newItem.quantity, item.max_stock) }
                   : item
               )

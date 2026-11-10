@@ -54,6 +54,30 @@ export const MenuIcon = (props: IconProps) => (
   </svg>
 )
 
+export const HeartIcon = ({ filled, ...props }: IconProps & { filled?: boolean }) => (
+  <svg {...base(props)} fill={filled ? 'currentColor' : 'none'}>
+    <path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20Z" />
+  </svg>
+)
+
+export const PlusIcon = (props: IconProps) => (
+  <svg {...base(props)}>
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+)
+
+export const MinusIcon = (props: IconProps) => (
+  <svg {...base(props)}>
+    <path d="M5 12h14" />
+  </svg>
+)
+
+export const ChevronRight = (props: IconProps) => (
+  <svg {...base(props)}>
+    <path d="m9 6 6 6-6 6" />
+  </svg>
+)
+
 // Redes: círculo o cuadro relleno con el glifo calado en el color del fondo
 export const FacebookIcon = (props: IconProps) => (
   <svg viewBox="0 0 24 24" aria-hidden {...props}>

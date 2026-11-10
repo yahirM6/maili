@@ -10,9 +10,11 @@ interface ProductCarouselProps {
   id?: string
   title: string
   products: Product[]
+  /** section: pantalla completa con snap (home). inline: bloque normal dentro de otra página. */
+  variant?: 'section' | 'inline'
 }
 
-export default function ProductCarousel({ id, title, products }: ProductCarouselProps) {
+export default function ProductCarousel({ id, title, products, variant = 'section' }: ProductCarouselProps) {
   const sectionRef = useRef<HTMLElement>(null)
   const trackRef = useRef<HTMLUListElement>(null)
   const [edges, setEdges] = useState({ start: true, end: false })
@@ -95,8 +97,12 @@ export default function ProductCarousel({ id, title, products }: ProductCarousel
       ref={sectionRef}
       id={id}
       aria-label={title}
-      data-snap
-      className="flex min-h-svh snap-start flex-col justify-center bg-background px-5 pb-12 pt-24 md:snap-align-none md:px-[60px] md:py-[86px]"
+      data-snap={variant === 'section' ? '' : undefined}
+      className={
+        variant === 'section'
+          ? 'flex min-h-svh snap-start flex-col justify-center bg-background px-5 pb-12 pt-24 md:snap-align-none md:px-[60px] md:py-[86px]'
+          : 'bg-background px-5 py-16 md:px-[60px] md:py-24'
+      }
     >
       <div className="mx-auto w-full max-w-[1800px]">
       <h2 data-carousel-title className="mb-5 font-garamond text-[clamp(1.75rem,2.75vw,2.5rem)] leading-none md:mb-7">
