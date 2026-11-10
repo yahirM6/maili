@@ -31,9 +31,12 @@ export async function updateSession(request: NextRequest){
     if (request.nextUrl.pathname.startsWith('/admin') &&
         !request.nextUrl.pathname.startsWith('/admin/login')
     ){
-        if(!user){
+        // No basta con tener sesión: solo entra quien tenga el rol "admin" en app_metadata
+        // (lo asigna supabase/migrations/20261107_admin_role_rls.sql; el usuario no puede cambiárselo)
+        if(!user || user.app_metadata?.role !== 'admin'){
             const url = request.nextUrl.clone()
             url.pathname = '/admin/login'
+            if (user) url.searchParams.set('error', 'no-admin')
             return NextResponse.redirect(url)
         }
     }

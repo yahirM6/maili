@@ -18,13 +18,17 @@ export default function AdminLogin() {
         setError(null)
 
         // Llamada a la API de Supabase para validar credenciales
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
         })
 
         if (error) {
         setError(error.message)
+        } else if (data.user?.app_metadata?.role !== 'admin') {
+        // Credenciales válidas, pero la cuenta no es de administrador: se cierra la sesión
+        await supabase.auth.signOut()
+        setError('Esta cuenta no tiene acceso al panel.')
         } else {
         // Si el login es exitoso, Next.js nos lleva al panel protegido
         router.push('/admin')
